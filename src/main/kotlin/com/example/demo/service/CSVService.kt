@@ -38,15 +38,18 @@ class CSVService {
     }
 
     fun findSpeakerWithLowestTotalWords(list: List<CSVRow>): String? {
-        return list.groupBy { it.speaker }
+        val speakerWordCounts = list.groupBy { it.speaker }
             .mapValues { (_, rows) ->
                 rows.sumOf {
                     it.words.toIntOrNull()
-                        ?: 0  // I need to cast "words" to Int from Strıng because of the CSV. Normally I would use it as an Int
+                        ?: 0 // I need to cast "words" to Int from Strıng because of the CSV. Normally I would use it as an Int
                 }
             }
-            .minByOrNull { it.value }
-            ?.key
+
+        val minWordCount = speakerWordCounts.values.minOrNull() ?: return null
+        val speakersWithMinWords = speakerWordCounts.filter { it.value == minWordCount }.keys
+
+        return if (speakersWithMinWords.size == 1) speakersWithMinWords.first() else null
     }
 
     fun findSpeakerWithMostOccurrencesInDate(list: List<CSVRow>, dateToFind: String): String? {
@@ -55,12 +58,15 @@ class CSVService {
             .groupingBy { it.speaker }
             .eachCount()
 
-        val mostFrequentName = nameCounts.maxByOrNull { it.value }
-        return mostFrequentName?.key
+        val maxCount = nameCounts.values.maxOrNull()
+        val mostFrequentSpeakers = nameCounts.filterValues { it == maxCount }.keys
+
+        return if (mostFrequentSpeakers.size == 1) mostFrequentSpeakers.first() else null
     }
 
     fun findSpeakerWithMostOccurrencesInTopic(list: List<CSVRow>, topicToFind: String): String? {
         val filteredData = list.filter { it.topic == topicToFind }
+
         if (filteredData.isEmpty()) {
             return null
         }
@@ -68,8 +74,10 @@ class CSVService {
         val nameCounts = filteredData.groupingBy { it.speaker }
             .eachCount()
 
-        val mostFrequentName = nameCounts.maxByOrNull { it.value }
-        return mostFrequentName?.key
+        val maxCount = nameCounts.values.maxOrNull()
+        val mostFrequentSpeakers = nameCounts.filterValues { it == maxCount }.keys
+
+        return if (mostFrequentSpeakers.size == 1) mostFrequentSpeakers.first() else null
     }
 
     fun readCSVFromURL(url: String): List<CSVRow> {
